@@ -1,0 +1,1 @@
+# charm-opensearch-k8s
