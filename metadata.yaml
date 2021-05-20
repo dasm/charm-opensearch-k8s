@@ -1,19 +1,23 @@
 # Copyright 2021 dasm
 # See LICENSE file for licensing details.
-name: charm-opensearch-k8s
+name: opensearch-k8s
 description: |
-  TEMPLATE-TODO: fill out the charm's description
+  OpenSearch is a community-driven, open source search and analytics suite
+  derived from Apache 2.0 licensed Elasticsearch 7.10.2 & Kibana 7.10.2.
+  It consists of a search engine daemon, OpenSearch, and a visualization and
+  user interface, OpenSearch Dashboards.
 summary: |
-  TEMPLATE-TODO: fill out the charm's summary
+  OpenSearch: Open source distributed and RESTful search engine.
 
-# TEMPLATE-TODO: replace with containers for your workload (delete for non-k8s)
 containers:
-  httpbin:
-    resource: httpbin-image
+  opensearch:
+    resource: image
 
-# TEMPLATE-TODO: each container defined above must specify an oci-image resource
 resources:
-  httpbin-image:
+  image:
     type: oci-image
-    description: OCI image for httpbin (kennethreitz/httpbin)
+    description: OCI image for opensearch (https://hub.docker.com/r/opensearchproject/opensearch)
 
+requires:
+  ingress:
+    interface: ingress
