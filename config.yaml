@@ -8,8 +8,19 @@
 # Learn more about config at: https://juju.is/docs/sdk/config
 
 options:
-  external-hostname:
-    default: opensearch.juju
+  cluster-name:
     type: string
-    description: |
-      External hostname reflected in the ingress controller
+    default: "opensearch-cluster"
+    description: If the OpenSearch cluster name is not passed in the relation set it here.
+  port:
+    type: int
+    default: 9200
+    description: OpenSearch port
+  perf-port:
+    type: int
+    default: 9600
+    description: OpenSearch port for Performance Analyzer
+  jvm-heap-size:
+    type: string
+    default: "512m"
+    description: JVM Heap memory size (default 512m)
