@@ -12,14 +12,18 @@ options:
     type: string
     default: "opensearch-cluster"
     description: If the OpenSearch cluster name is not passed in the relation set it here.
-  port:
-    type: int
-    default: 9200
-    description: OpenSearch port
-  perf-port:
-    type: int
-    default: 9600
-    description: OpenSearch port for Performance Analyzer
+  node-name:
+    type: string
+    default: "opensearch-node1"
+    description: OpenSearch hostname
+  discovery-seed-hosts:
+    type: string
+    default: "openseaerch-node1"
+    description: OpenSearch seed host
+  cluster-initial-master-nodes:
+    type: string
+    default: "opensearch-node1"
+    description: Initial master node
   jvm-heap-size:
     type: string
     default: "512m"
