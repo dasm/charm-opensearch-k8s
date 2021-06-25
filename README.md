@@ -28,7 +28,7 @@ juju debug-log
 microk8s kubectl logs pod/opensearch-k8s-0 -c opensearch -n development
 microk8s kubectl logs pod/opensearch-k8s-0 -c charm -n development
 
-k exec -it pod/wireguard-sidecar-0 -c wireguard -n development -- ash
-k exec -it pod/wireguard-sidecar-0 -c wireguard -n development -- /charm/bin/pebble plan
-k exec -it pod/wireguard-sidecar-0 -c wireguard -n development -- /charm/bin/pebble services
+k exec -it pod/opensearch-k8s-0 -c opensearch -n development -- ash
+k exec -it pod/opensearch-k8s-0 -c opensearch -n development -- /charm/bin/pebble plan
+k exec -it pod/opensearch-k8s-0 -c opensearch -n development -- /charm/bin/pebble services
 ```
