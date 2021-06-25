@@ -17,10 +17,10 @@ from collections import OrderedDict
 
 from charms.nginx_ingress_integrator.v0.ingress import IngressRequires
 
-from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent
+from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent, UpdateStatusEvent
 from ops.framework import StoredState
 from ops.main import main
-from ops.model import ActiveStatus, BlockedStatus, ModelError
+from ops.model import ActiveStatus, WaitingStatus, ModelError
 from ops.pebble import ConnectionError, ServiceStatus, ChangeError
 
 logger = logging.getLogger(__name__)
@@ -39,8 +39,11 @@ class CharmOpenSearch(CharmBase):
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.framework.observe(self.on.opensearch_pebble_ready, self._on_opensearch_pebble_ready)
+        self.framework.observe(
+            self.on.opensearch_pebble_ready, self._on_opensearch_pebble_ready
+        )
         self.framework.observe(self.on.config_changed, self._on_config_changed)
+        self.framework.observe(self.on.update_status, self._on_update_status)
 
         self.state.set_default(auto_start=True)
         self.state.set_default(jvm_heap_size="512m")
@@ -58,7 +61,6 @@ class CharmOpenSearch(CharmBase):
             },
         )
 
-
     def _opensearch_layer(self):
         environment = {
             "OPENSEARCH_JAVA_OPTS": f"-Xms{self.state.jvm_heap_size} -Xmx{self.state.jvm_heap_size}",
@@ -67,10 +69,10 @@ class CharmOpenSearch(CharmBase):
         # Install missing "su"
 
         cmd = (
-            'su -p opensearch -c "/usr/share/opensearch/bin/opensearch '
-            f'-Ecluster.name={self.state.cluster_name} '
-            f'-Enode.name={self.state.node_name} '
-            f'-Ediscovery.seed_hosts={self.state.discovery_seed_hosts} '
+            'yum install -y procps; su -p opensearch -c "/usr/share/opensearch/bin/opensearch '
+            f"-Ecluster.name={self.state.cluster_name} "
+            f"-Enode.name={self.state.node_name} "
+            f"-Ediscovery.seed_hosts={self.state.discovery_seed_hosts} "
             f'-Ecluster.initial_master_nodes={self.state.cluster_initial_master_nodes}"'
         )
 
@@ -78,36 +80,25 @@ class CharmOpenSearch(CharmBase):
             "summary": "opensearch layer",
             "description": "pebble config layer for opensearchproject/opensearch",
             "services": {
-                "p": {
-                    "override": "merge",
-                    "command": "yum install -y procps",
-                    "startup": "enabled",
-                    "summary": "procps",
-                },
                 "opensearch": {
-                    "requires": "p",
                     "override": "merge",
                     "environment": environment,
                     "summary": "opensearch",
                     "command": cmd,
-                    "startup": "disabled",
+                    "startup": "enabled",
                 }
-            }
+            },
         }
-
 
     def _on_opensearch_pebble_ready(self, event: PebbleReadyEvent) -> None:
         container = event.workload
         layer = self._opensearch_layer()
         container.add_layer("opensearch", layer, combine=True)
-        container.autostart()
-
-        if container.get_service("p").is_running():
-            self.unit.status = BlockedStatus("Waiting for procps")
-            return
-
         container.start("opensearch")
         self.unit.status = ActiveStatus()
+
+    def _on_update_status(self, event: UpdateStatusEvent) -> None:
+        pass
 
     def _on_config_changed(self, event: ConfigChangedEvent) -> None:
         container = self.unit.get_container("opensearch")
@@ -119,7 +110,6 @@ class CharmOpenSearch(CharmBase):
         except ModelError:
             logger.info("Service 'opensearch' not yet defined, waiting...")
             return
-
 
         environment = {}
         for env_name, config in OPENSEARCH_ARGS.items():
