@@ -3,23 +3,22 @@
 #
 
 options:
-  cluster-name:
+  cluster_name:
     type: string
     default: "opensearch-cluster"
     description: If the OpenSearch cluster name is not passed in the relation set it here.
-  node-name:
+  node_name:
     type: string
     default: "opensearch-node1"
     description: OpenSearch hostname
-  discovery-seed-hosts:
+  discovery_seed_hosts:
     type: string
     default: "opensearch-node1"
     description: OpenSearch seed host
-  cluster-initial-master-nodes:
+  type:
     type: string
-    default: "opensearch-node1"
-    description: Initial master node
-  jvm-heap-size:
+    default: "single-node"
+  jvm_heap_size:
     type: string
     default: "512m"
     description: JVM Heap memory size (default 512m)
