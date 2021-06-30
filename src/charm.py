@@ -22,7 +22,7 @@ class CharmOpenSearch(CharmBase):
     def __init__(self, *args):
         super().__init__(*args)
         self.framework.observe(self.on.opensearch_pebble_ready, self._on_pebble_ready)
-        #self.framework.observe(self.on.config_changed, self._on_config_changed)
+        self.framework.observe(self.on.config_changed, self._on_config_changed)
 
         self.ingress = IngressRequires(
             self,
@@ -81,6 +81,7 @@ class CharmOpenSearch(CharmBase):
 
         config_changed = bool(services != layer["services"])
 
+        self.unit.status = ActiveStatus("in progress")
         if config_changed:
             container.add_layer("opensearch", layer, combine=True)
             logging.info("Added updated layer 'opensearch' to Pebble plan")
