@@ -3,6 +3,10 @@
 #
 
 options:
+  jvm_heap_size:
+    type: string
+    default: "512m"
+    description: JVM Heap memory size (default 512m)
   cluster_name:
     type: string
     default: "opensearch-cluster"
@@ -18,7 +22,3 @@ options:
   type:
     type: string
     default: "single-node"
-  jvm_heap_size:
-    type: string
-    default: "512m"
-    description: JVM Heap memory size (default 512m)

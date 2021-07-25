@@ -11,3 +11,7 @@ resume:
   description: Start opensearch service
 pause:
   description: Stop opensearch service
+reveal-admin-password:
+  description: Reveal "admin" password
+regenerate-admin-password:
+  description: Change "admin" password

@@ -6,6 +6,9 @@ Deploy the app with an attached container resource
 
 ```bash
 juju deploy opensearch-k8s --resource image=opensearchproject/opensearch:1.0.0-rc1
+juju deploy nginx-ingress-integrator
+juju relate nginx-ingress-integrator opensearch-k8s
+curl -u admin:admin -k https://<ingress_ip>:9200 -u
 ```
 
 # Development
