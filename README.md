@@ -60,7 +60,11 @@ microk8s stop
 ## Debugging
 ```bash
 watch -n1 -c juju status --color
+
+# Change verbositoy
+juju model-config logging-config="<root>=INFO;unit=DEBUG"
 juju debug-log
+
 
 microk8s kubectl logs pod/opensearch-k8s-0 -c opensearch -n development
 microk8s kubectl logs pod/opensearch-k8s-0 -c charm -n development
