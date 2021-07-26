@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import logging
+from io import StringIO
 import requests
 import secrets
 import string
@@ -95,26 +96,30 @@ class CharmOpenSearch(CharmBase):
 
         layer = self._opensearch_layer()
         container.add_layer("opensearch", layer, combine=True)
+
+        self._unblock_users(container)
+
         container.autostart()
-        self._unblock_users()
         self.unit.status = ActiveStatus("ready")
 
-    def _unblock_users(self):
+    def _unblock_users(self, container):
         path = "/usr/share/opensearch/plugins/opensearch-security/securityconfig/internal_users.yml"
 
-        with open(path) as users_file:
-            internal_users = yaml.safe_load(users_file)
+        users_file = container.pull(path)
+        internal_users = yaml.safe_load(users_file)
 
         for user in ("admin", "kibanaserver"):
             internal_users[user]['reserved'] = False
 
-        with open(path, "w") as users_file:
-            yaml.dump(internal_users, users_file)
+        logger.debug(internal_users)
+
+        users_file = StringIO(yaml.safe_dump(internal_users))
+        container.push(path, users_file)
         logger.info("Users unreserved")
 
     def _on_reveal_admin_password_action(self, event):
         return event.set_results(
-            OrderedDict(username="admin", password=self.state.admin_password)
+            OrderedDict(username="admin", password=self.stored.admin_password)
         )
 
     def _on_regenerate_admin_password_action(self, event):
@@ -122,13 +127,13 @@ class CharmOpenSearch(CharmBase):
 
         url = "https://localhost:9200/_plugins/_security/api/account"
         data = {
-            "current_password" : self.state.admin_password,
+            "current_password" : self.stored.admin_password,
             "password" : new_password,
         }
 
         r = requests.put(url, data=data)
         if r.status_code == requests.codes.ok:
-            self.state.admin_password = new_password
+            self.stored.admin_password = new_password
             logger.info("Admin password updated")
 
     def _on_config_changed(self, event: ConfigChangedEvent) -> None:
