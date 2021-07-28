@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 def random_password():
     alphabet = string.ascii_letters + string.digits
-    password = ''.join(secrets.choice(alphabet) for i in range(16))
+    password = "".join(secrets.choice(alphabet) for i in range(16))
     return password
 
 
@@ -33,7 +33,7 @@ def unblock_users(container):
     internal_users = yaml.safe_load(users_file)
 
     for user in ("admin", "kibanaserver"):
-        internal_users[user]['reserved'] = False
+        internal_users[user]["reserved"] = False
 
     logger.debug(internal_users)
 
@@ -46,24 +46,15 @@ def updated_admin_password(current_password):
     new_password = random_password()
 
     url = "https://localhost:9200/_plugins/_security/api/account"
-    headers = {
-        "Content-Type": "application/json"
-    }
-    data = {
-        "current_password": current_password,
-        "password" : new_password
-    }
+    headers = {"Content-Type": "application/json"}
+    data = {"current_password": current_password, "password": new_password}
     auth = requests.auth.HTTPBasicAuth("admin", current_password)
-    #root_ca_path = "/usr/share/opensearch/config/root-ca.pem"
-    #root_ca_file = container.pull(root_ca_path)
-    #root_ca = root_ca_file.read()
+    # root_ca_path = "/usr/share/opensearch/config/root-ca.pem"
+    # root_ca_file = container.pull(root_ca_path)
+    # root_ca = root_ca_file.read()
 
     r = requests.put(
-        url,
-        data=json.dumps(data),
-        headers=headers,
-        verify=False,
-        auth=auth
+        url, data=json.dumps(data), headers=headers, verify=False, auth=auth
     )
 
     logger.debug(r)
@@ -83,7 +74,8 @@ class CharmOpenSearch(CharmBase):
             self.on.reveal_admin_password_action, self._on_reveal_admin_password_action
         )
         self.framework.observe(
-            self.on.regenerate_admin_password_action, self._on_regenerate_admin_password_action
+            self.on.regenerate_admin_password_action,
+            self._on_regenerate_admin_password_action,
         )
 
         self.stored.set_default(admin_password="admin")
