@@ -1,21 +1,22 @@
 #!/usr/bin/env python3
 
-import logging
-from io import StringIO
 import json
-import requests
+import logging
 import secrets
 import string
-import yaml
 from collections import OrderedDict
+from io import StringIO
 
 from charms.nginx_ingress_integrator.v0.ingress import IngressRequires
 
-from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent, UpdateStatusEvent
+from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent
 from ops.framework import StoredState
 from ops.main import main
-from ops.model import ActiveStatus, BlockedStatus, MaintenanceStatus
+from ops.model import ActiveStatus
 
+import requests
+
+import yaml
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +28,10 @@ def random_password():
 
 
 def unblock_users(container):
-    path = "/usr/share/opensearch/plugins/opensearch-security/securityconfig/internal_users.yml"
+    path = (
+        "/usr/share/opensearch/"
+        "plugins/opensearch-security/securityconfig/internal_users.yml"
+    )
 
     users_file = container.pull(path)
     internal_users = yaml.safe_load(users_file)
