@@ -36,6 +36,31 @@ def test_updated_password(harness, config_expected):
         assert new_password == "random_password"
 
 
+@pytest.mark.parametrize(
+    "config_expected",
+    [
+        (True, "new_password"),
+        (False, "new_password"),
+    ],
+    ids=[
+        "success",
+        "failure",
+    ],
+)
+def test_regenerate_admin_password_action(harness, config_expected):
+    updated, new_password = config_expected
+
+    old_password = "default_password"
+    harness.charm.stored.admin_password = old_password
+
+    with patch("charm.updated_admin_password", return_value=(updated, new_password)):
+        harness.charm._on_regenerate_admin_password_action(None)
+        if updated:
+            assert harness.charm.stored.admin_password == new_password
+        else:
+            assert harness.charm.stored.admin_password == old_password
+
+
 def test_reveal_password(harness):
     act = MagicMock(spec=ActionEvent)
     harness.charm.stored.admin_password = "testing"
