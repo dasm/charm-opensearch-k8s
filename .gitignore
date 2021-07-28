@@ -5,6 +5,7 @@ __pycache__/
 
 # C extensions
 *.so
+*.swp
 
 # Distribution / packaging
 .Python
@@ -50,6 +51,7 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
+report
 
 # Translations
 *.mo
