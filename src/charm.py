@@ -117,7 +117,7 @@ class CharmOpenSearch(CharmBase):
                     "user": "opensearch",
                     "override": "merge",
                     "environment": {
-                        "OPENSEARCH_JAVA_OPTS": f"-Xms{jvm_heap_size} -Xmx{jvm_heap_size}",
+                        "OPENSEARCH_JAVA_OPTS": f"-Xms{jvm_heap_size} -Xmx{jvm_heap_size}",  # noqa: E501
                         "JAVA_HOME": "/usr/share/opensearch/jdk",
                     },
                     "summary": "opensearch",
