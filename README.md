@@ -1,5 +1,7 @@
 # Introduction
 This charm is used to configure OpenSearch into a kubernetes cloud.
+After successful deployment, the OpenSearch is configured with default `admin:admin`
+credentials. To change that, you need to run `juju run-action opensearck-k8s/0 regenerate-admin-password --wait` to change that and make it more secure.
 
 # Deployment
 Deploy the app with an attached container resource
@@ -73,3 +75,15 @@ k exec -it pod/opensearch-k8s-0 -c opensearch -n development -- bash
 k exec -it pod/opensearch-k8s-0 -c opensearch -n development -- /charm/bin/pebble plan
 k exec -it pod/opensearch-k8s-0 -c opensearch -n development -- /charm/bin/pebble services
 ```
+
+Road Map
+---------
+
+### Relations
+* [x] define relations to use ingress controller
+* [ ] define app relations for HA deployments (password share)
+
+### Configuration
+* [ ] Support for license file as well as license URL
+* [ ] Add option to upload custom `internal_users.yml`
+* [ ] Configure upload of cacert files
