@@ -21,9 +21,9 @@ import yaml
 logger = logging.getLogger(__name__)
 
 
-def random_password():
+def random_password(length=32):
     alphabet = string.ascii_letters + string.digits
-    password = "".join(secrets.choice(alphabet) for i in range(16))
+    password = "".join(secrets.choice(alphabet) for i in range(length))
     return password
 
 
