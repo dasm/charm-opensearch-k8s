@@ -12,7 +12,7 @@ from charms.nginx_ingress_integrator.v0.ingress import IngressRequires
 from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent
 from ops.framework import StoredState
 from ops.main import main
-from ops.model import ActiveStatus
+from ops.model import ActiveStatus, WaitingStatus
 
 import requests
 
@@ -65,9 +65,7 @@ def is_exec_rest_call_successful(password, payload, path=""):
     return r.status_code == requests.codes.ok
 
 
-def updated_admin_password(current_password):
-    new_password = generate_random_password()
-
+def updated_admin_password(current_password, new_password):
     payload = {"current_password": current_password, "password": new_password}
     path = "_plugins/_security/api/account"
     success = is_exec_rest_call_successful(current_password, payload, path)
@@ -83,16 +81,19 @@ class CharmOpenSearch(CharmBase):
     def __init__(self, *args):
         super().__init__(*args)
         self.framework.observe(self.on.opensearch_pebble_ready, self._on_pebble_ready)
+        self.framework.observe(
+            self.on.opensearch_pebble_ready, self._configure_admin_password
+        )
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(
             self.on.reveal_admin_password_action, self._on_reveal_admin_password_action
         )
         self.framework.observe(
             self.on.regenerate_admin_password_action,
-            self._on_regenerate_admin_password_action,
+            self._on_update_admin_password_action,
         )
 
-        self._state.set_default(admin_password="admin")
+        self._state.set_default(password_updated=False, admin_password="admin")
 
         self.ingress = IngressRequires(
             self,
@@ -137,7 +138,7 @@ class CharmOpenSearch(CharmBase):
             },
         }
 
-    def _is_workload_healthy(self):
+    def _is_workload_ready(self):
         try:
             path = "/_cluster/health"
             return is_exec_rest_call_successful(self._state.admin_password, {}, path)
@@ -156,14 +157,27 @@ class CharmOpenSearch(CharmBase):
         container.autostart()
         self.unit.status = ActiveStatus("ready")
 
+    def _configure_admin_password(self, event):
+        if not self._is_workload_ready(self):
+            msg = "Workload is not ready"
+            logging.info(msg)
+            self.unit.status = WaitingStatus(msg)
+            event.defer()
+            return
+
+        if not self._state.password_updated:
+            self.unit.status = WaitingStatus("Performing initial config")
+            self._on_update_admin_password_action(self, event)
+
     def _on_reveal_admin_password_action(self, event):
         return event.set_results(
             OrderedDict(username="admin", password=self._state.admin_password)
         )
 
-    def _on_regenerate_admin_password_action(self, event):
-        updated, new_password = updated_admin_password(self._state.admin_password)
-        if updated:
+    def _on_update_admin_password_action(self, event):
+        new_password = generate_random_password()
+
+        if updated_admin_password(self._state.admin_password, new_password):
             self._state.admin_password = new_password
             logger.info("Admin password changed")
         else:

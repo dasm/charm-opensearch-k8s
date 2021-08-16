@@ -12,8 +12,8 @@ import requests_mock
 @pytest.mark.parametrize(
     "config_expected",
     [
-        (200, True),
-        (404, False),
+        (200, (True, "random_password")),
+        (404, (False, "random_password")),
     ],
     ids=[
         "success",
@@ -30,31 +30,31 @@ def test_updated_password(harness, config_expected):
     ), requests_mock.Mocker() as m:
         m.put(url, status_code=status_code)
 
-        updated, new_password = charm.updated_admin_password("")
+        updated = charm.updated_admin_password("", "random_password")
 
         assert updated == expected
-        assert new_password == "random_password"
 
 
 @pytest.mark.parametrize(
     "config_expected",
     [
-        (True, "new_password"),
-        (False, "new_password"),
+        (True, "random_password"),
+        (False, "default_password"),
     ],
     ids=[
         "success",
         "failure",
     ],
 )
-def test_regenerate_admin_password_action(harness, config_expected):
+def test_update_admin_password_action(harness, config_expected):
     updated, new_password = config_expected
 
     old_password = "default_password"
     harness.charm._state.admin_password = old_password
 
-    with patch("charm.updated_admin_password", return_value=(updated, new_password)):
-        harness.charm._on_regenerate_admin_password_action(None)
+    with (patch("charm.updated_admin_password", return_value=updated) as updated,
+            patch("charm.generate_random_password", return_value=new_password) as password):
+        harness.charm._on_update_admin_password_action(None)
         if updated:
             assert harness.charm._state.admin_password == new_password
         else:
