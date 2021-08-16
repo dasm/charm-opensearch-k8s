@@ -48,23 +48,31 @@ def unblock_users(container):
     logger.info("Users unlocked")
 
 
-def updated_admin_password(current_password):
-    new_password = generate_random_password()
-
-    url = "https://localhost:9200/_plugins/_security/api/account"
+def is_exec_rest_call_successful(password, payload, path=""):
+    url = f"https://localhost:9200/{path}"
     headers = {"Content-Type": "application/json"}
-    data = {"current_password": current_password, "password": new_password}
-    auth = requests.auth.HTTPBasicAuth("admin", current_password)
+
     # root_ca_path = "/usr/share/opensearch/config/root-ca.pem"
     # root_ca_file = container.pull(root_ca_path)
     # root_ca = root_ca_file.read()
 
+    auth = requests.auth.HTTPBasicAuth("admin", password)
     r = requests.put(
-        url, data=json.dumps(data), headers=headers, verify=False, auth=auth
+        url, data=json.dumps(payload), headers=headers, verify=False, auth=auth
     )
 
     logger.debug(r)
-    return r.status_code == requests.codes.ok, new_password
+    return r.status_code == requests.codes.ok
+
+
+def updated_admin_password(current_password):
+    new_password = generate_random_password()
+
+    payload = {"current_password": current_password, "password": new_password}
+    path = "_plugins/_security/api/account"
+    success = is_exec_rest_call_successful(current_password, payload, path)
+
+    return success, new_password
 
 
 class CharmOpenSearch(CharmBase):
@@ -128,6 +136,14 @@ class CharmOpenSearch(CharmBase):
                 }
             },
         }
+
+    def _is_workload_healthy(self):
+        try:
+            query = "/_cluster/health"
+            response = ""
+        except (requests.HTTPError, requests.ConnectionError, requests.Tiemout) as err:
+            logging.debug("Cannot connect to the workload: %s", err)
+            return False
 
     def _on_pebble_ready(self, event: PebbleReadyEvent) -> None:
         container = event.workload
