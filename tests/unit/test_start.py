@@ -26,7 +26,7 @@ def test_updated_password(harness, config_expected):
     status_code, expected = config_expected
 
     with patch(
-        "charm.random_password", return_value="random_password"
+        "charm.generate_random_password", return_value="random_password"
     ), requests_mock.Mocker() as m:
         m.put(url, status_code=status_code)
 
@@ -51,18 +51,18 @@ def test_regenerate_admin_password_action(harness, config_expected):
     updated, new_password = config_expected
 
     old_password = "default_password"
-    harness.charm.stored.admin_password = old_password
+    harness.charm._state.admin_password = old_password
 
     with patch("charm.updated_admin_password", return_value=(updated, new_password)):
         harness.charm._on_regenerate_admin_password_action(None)
         if updated:
-            assert harness.charm.stored.admin_password == new_password
+            assert harness.charm._state.admin_password == new_password
         else:
-            assert harness.charm.stored.admin_password == old_password
+            assert harness.charm._state.admin_password == old_password
 
 
 def test_reveal_password(harness):
     act = MagicMock(spec=ActionEvent)
-    harness.charm.stored.admin_password = "testing"
+    harness.charm._state.admin_password = "testing"
     harness.charm._on_reveal_admin_password_action(act)
     act.set_results.assert_called_with({"username": "admin", "password": "testing"})

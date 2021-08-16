@@ -20,8 +20,10 @@ import yaml
 
 logger = logging.getLogger(__name__)
 
+RESERVED_USERS = ("admin", "kibanaserver")
 
-def random_password(length=32):
+
+def generate_random_password(length=32):
     alphabet = string.ascii_letters + string.digits
     password = "".join(secrets.choice(alphabet) for i in range(length))
     return password
@@ -36,18 +38,18 @@ def unblock_users(container):
     users_file = container.pull(path)
     internal_users = yaml.safe_load(users_file)
 
-    for user in ("admin", "kibanaserver"):
+    for user in RESERVED_USERS:
         internal_users[user]["reserved"] = False
 
     logger.debug(internal_users)
 
     users_file = StringIO(yaml.safe_dump(internal_users))
     container.push(path, users_file)
-    logger.info("Users unreserved")
+    logger.info("Users unlocked")
 
 
 def updated_admin_password(current_password):
-    new_password = random_password()
+    new_password = generate_random_password()
 
     url = "https://localhost:9200/_plugins/_security/api/account"
     headers = {"Content-Type": "application/json"}
