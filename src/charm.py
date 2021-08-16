@@ -68,7 +68,7 @@ def updated_admin_password(current_password):
 class CharmOpenSearch(CharmBase):
     """Charm the service."""
 
-    stored = StoredState()
+    _state = StoredState()
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -82,7 +82,7 @@ class CharmOpenSearch(CharmBase):
             self._on_regenerate_admin_password_action,
         )
 
-        self.stored.set_default(admin_password="admin")
+        self._state.set_default(admin_password="admin")
 
         self.ingress = IngressRequires(
             self,
@@ -140,13 +140,13 @@ class CharmOpenSearch(CharmBase):
 
     def _on_reveal_admin_password_action(self, event):
         return event.set_results(
-            OrderedDict(username="admin", password=self.stored.admin_password)
+            OrderedDict(username="admin", password=self._state.admin_password)
         )
 
     def _on_regenerate_admin_password_action(self, event):
-        updated, new_password = updated_admin_password(self.stored.admin_password)
+        updated, new_password = updated_admin_password(self._state.admin_password)
         if updated:
-            self.stored.admin_password = new_password
+            self._state.admin_password = new_password
             logger.info("Admin password changed")
         else:
             logger.error("Password not updated")
