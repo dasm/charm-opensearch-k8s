@@ -139,8 +139,8 @@ class CharmOpenSearch(CharmBase):
 
     def _is_workload_healthy(self):
         try:
-            query = "/_cluster/health"
-            response = ""
+            path = "/_cluster/health"
+            return is_exec_rest_call_successful(self._state.admin_password, {}, path)
         except (requests.HTTPError, requests.ConnectionError, requests.Tiemout) as err:
             logging.debug("Cannot connect to the workload: %s", err)
             return False
