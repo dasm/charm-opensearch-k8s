@@ -52,7 +52,7 @@ def test_update_admin_password_action(harness, config_expected):
     harness.charm._state.admin_password = old_password
 
     updated, new_password = config_expected
-    with patch("charm.updated_admin_password", return_value=updated) as upd, patch(
+    with patch("charm.updated_admin_password", return_value=updated), patch(
         "charm.generate_random_password", return_value=new_password
     ) as pwd:
 
