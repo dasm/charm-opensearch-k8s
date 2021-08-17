@@ -1,16 +1,15 @@
 # Introduction
 This charm is used to configure OpenSearch into a kubernetes cloud.
-After successful deployment, the OpenSearch is configured with default `admin:admin`
-credentials. To change that, you need to run `juju run-action opensearck-k8s/0 regenerate-admin-password --wait` to change that and make it more secure.
 
 # Deployment
 Deploy the app with an attached container resource
 
 ```bash
-juju deploy opensearch-k8s --resource image=opensearchproject/opensearch:1.0.0-rc1
+juju deploy opensearch-k8s
 juju deploy nginx-ingress-integrator
 juju relate nginx-ingress-integrator opensearch-k8s
-curl -u admin:admin -k https://<ingress_ip>:9200 -u
+juju run-action opensearch-k8s/0 reveal-admin-password
+curl -u admin:<password> -k https://<ingress_ip>:9200
 ```
 
 # Development
@@ -84,6 +83,7 @@ Road Map
 * [ ] define app relations for HA deployments (password share)
 
 ### Configuration
+* [X] Autogeneration of secure password during a startup.
 * [ ] Support for license file as well as license URL
 * [ ] Add option to upload custom `internal_users.yml`
 * [ ] Configure upload of cacert files
