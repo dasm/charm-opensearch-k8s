@@ -101,6 +101,7 @@ class CharmOpenSearch(CharmBase):
     def __init__(self, *args):
         super().__init__(*args)
         self.framework.observe(self.on.opensearch_pebble_ready, self._on_pebble_ready)
+        self.framework.observe(self.on.opensearch_pebble_ready, self._on_initial_config)
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(
             self.on.reveal_admin_password_action, self._on_reveal_admin_password_action
@@ -110,9 +111,7 @@ class CharmOpenSearch(CharmBase):
             self._on_update_admin_password_action,
         )
 
-        self._state.set_default(
-            password_updated=False, admin_password="admin", started=False
-        )
+        self._state.set_default(admin_password="admin", started=False)
 
         self.ingress = IngressRequires(
             self,
@@ -175,20 +174,27 @@ class CharmOpenSearch(CharmBase):
 
         unblock_users(container)
 
-        container.autostart()
+        logging.debug("State: %s", str(self._state.started))
+        if self._state.started:
+            return
 
+        logging.debug("State: %s", str(self._state.started))
+
+        logging.debug("Container is not started yet")
+        container.autostart()
+        self._state.started = True
         self.unit.status = ActiveStatus("ready")
 
-        while not self._is_workload_ready():
+    def _on_initial_config(self, event: PebbleReadyEvent) -> None:
+        if not self._is_workload_ready():
             msg = "Workload is not ready"
             logging.info(msg)
             self.unit.status = WaitingStatus(msg)
             event.defer()
-            time.sleep(5)
+            return
 
-        if self._state.password_updated == "admin":
-            self.unit.status = WaitingStatus("Performing initial config")
-            self._on_update_admin_password_action(self, event)
+        self.unit.status = WaitingStatus("Performing initial config")
+        self._on_update_admin_password_action(event)
 
         self.unit.status = ActiveStatus("ready")
 
