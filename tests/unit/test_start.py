@@ -57,7 +57,7 @@ def test_update_admin_password_action(harness, config_expected):
     ) as pwd:
 
         harness.charm._on_update_admin_password_action(None)
-        assert harness.charm._state.admin_password == pwd
+        assert harness.charm._state.admin_password == pwd()
 
 
 def test_reveal_password(harness):
