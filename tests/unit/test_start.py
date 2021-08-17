@@ -47,18 +47,21 @@ def test_updated_password(harness, config_expected):
     ],
 )
 def test_update_admin_password_action(harness, config_expected):
-    updated, new_password = config_expected
 
     old_password = "default_password"
     harness.charm._state.admin_password = old_password
 
-    with (patch("charm.updated_admin_password", return_value=updated) as updated,
-            patch("charm.generate_random_password", return_value=new_password) as password):
+    updated, new_password = config_expected
+    with patch("charm.updated_admin_password", return_value=updated) as upd, patch(
+        "charm.generate_random_password", return_value=new_password
+    ) as pwd:
+
         harness.charm._on_update_admin_password_action(None)
-        if updated:
-            assert harness.charm._state.admin_password == new_password
+        if upd:
+            pwd = new_password
         else:
-            assert harness.charm._state.admin_password == old_password
+            pwd = old_password
+        assert harness.charm._state.admin_password == pwd
 
 
 def test_reveal_password(harness):

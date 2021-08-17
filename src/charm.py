@@ -4,6 +4,7 @@ import json
 import logging
 import secrets
 import string
+import time
 from collections import OrderedDict
 from io import StringIO
 
@@ -48,7 +49,7 @@ def unblock_users(container):
     logger.info("Users unlocked")
 
 
-def is_exec_rest_call_successful(password, payload, path=""):
+def is_exec_rest_call_successful_put(password, payload, path=""):
     url = f"https://localhost:9200/{path}"
     headers = {"Content-Type": "application/json"}
 
@@ -57,7 +58,26 @@ def is_exec_rest_call_successful(password, payload, path=""):
     # root_ca = root_ca_file.read()
 
     auth = requests.auth.HTTPBasicAuth("admin", password)
+
     r = requests.put(
+        url, data=json.dumps(payload), headers=headers, verify=False, auth=auth
+    )
+
+    logger.debug(r)
+    return r.status_code == requests.codes.ok
+
+
+def is_exec_rest_call_successful_get(password, payload, path=""):
+    url = f"https://localhost:9200/{path}"
+    headers = {"Content-Type": "application/json"}
+
+    # root_ca_path = "/usr/share/opensearch/config/root-ca.pem"
+    # root_ca_file = container.pull(root_ca_path)
+    # root_ca = root_ca_file.read()
+
+    auth = requests.auth.HTTPBasicAuth("admin", password)
+
+    r = requests.get(
         url, data=json.dumps(payload), headers=headers, verify=False, auth=auth
     )
 
@@ -68,7 +88,7 @@ def is_exec_rest_call_successful(password, payload, path=""):
 def updated_admin_password(current_password, new_password):
     payload = {"current_password": current_password, "password": new_password}
     path = "_plugins/_security/api/account"
-    success = is_exec_rest_call_successful(current_password, payload, path)
+    success = is_exec_rest_call_successful_put(current_password, payload, path)
 
     return success, new_password
 
@@ -81,9 +101,6 @@ class CharmOpenSearch(CharmBase):
     def __init__(self, *args):
         super().__init__(*args)
         self.framework.observe(self.on.opensearch_pebble_ready, self._on_pebble_ready)
-        self.framework.observe(
-            self.on.opensearch_pebble_ready, self._configure_admin_password
-        )
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(
             self.on.reveal_admin_password_action, self._on_reveal_admin_password_action
@@ -93,7 +110,9 @@ class CharmOpenSearch(CharmBase):
             self._on_update_admin_password_action,
         )
 
-        self._state.set_default(password_updated=False, admin_password="admin")
+        self._state.set_default(
+            password_updated=False, admin_password="admin", started=False
+        )
 
         self.ingress = IngressRequires(
             self,
@@ -140,9 +159,11 @@ class CharmOpenSearch(CharmBase):
 
     def _is_workload_ready(self):
         try:
-            path = "/_cluster/health"
-            return is_exec_rest_call_successful(self._state.admin_password, {}, path)
-        except (requests.HTTPError, requests.ConnectionError, requests.Tiemout) as err:
+            path = "_cluster/health"
+            return is_exec_rest_call_successful_get(
+                self._state.admin_password, {}, path
+            )
+        except (requests.HTTPError, requests.ConnectionError, requests.Timeout) as err:
             logging.debug("Cannot connect to the workload: %s", err)
             return False
 
@@ -155,19 +176,21 @@ class CharmOpenSearch(CharmBase):
         unblock_users(container)
 
         container.autostart()
+
         self.unit.status = ActiveStatus("ready")
 
-    def _configure_admin_password(self, event):
-        if not self._is_workload_ready(self):
+        while not self._is_workload_ready():
             msg = "Workload is not ready"
             logging.info(msg)
             self.unit.status = WaitingStatus(msg)
             event.defer()
-            return
+            time.sleep(5)
 
-        if not self._state.password_updated:
+        if self._state.password_updated == "admin":
             self.unit.status = WaitingStatus("Performing initial config")
             self._on_update_admin_password_action(self, event)
+
+        self.unit.status = ActiveStatus("ready")
 
     def _on_reveal_admin_password_action(self, event):
         return event.set_results(
