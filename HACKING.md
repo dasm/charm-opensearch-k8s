@@ -5,9 +5,9 @@
 sudo usermod -a -G microk8s $USER
 newgrp microk8s  # or relogin
 
-sudo snap install microk8s --classic --channel=1.18/stable
-sudo snap install juju
-sudo snap install charmcraft
+sudo snap install microk8s --classic
+sudo snap install juju --classic
+sudo snap install charmcraft --classic
 
 # Create an alias to kubectl
 sudo snap alias microk8s.kubectl kubectl
@@ -32,6 +32,15 @@ kubectl get all -n testing
 
 # Clone the charm code
 git clone https://github.com/dasm/charm-opensearch-k8s && cd charm-opensearch-k8s
+
+# Initialize LXD
+lxd init --auto
+
+# Install pip3
+sudo apt install python3-pip
+
+# Fetch nginx integration
+charmcraft fetch-lib charms.nginx_ingress_integrator.v0.ingress
 
 # Build the charm package
 charmcraft build
