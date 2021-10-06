@@ -46,7 +46,7 @@ charmcraft fetch-lib charms.nginx_ingress_integrator.v0.ingress
 charmcraft build
 
 # Deploy!
-juju deploy ./opensearch-k8s_ubuntu-20.04-amd64.charm --resource image=opensearchproject/opensearch:1.0.0-rc1
+juju deploy ./opensearch-k8s_ubuntu-20.04-amd64.charm --resource image=opensearchproject/opensearch:1.0.0
 
 # Monitor deployment
 watch --color juju status --color
