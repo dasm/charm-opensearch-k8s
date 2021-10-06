@@ -15,8 +15,8 @@ Deploy the app with an attached container resource.
 juju deploy opensearch-k8s
 juju deploy nginx-ingress-integrator
 juju relate nginx-ingress-integrator opensearch-k8s
-juju run-action opensearch-k8s/0 reveal-admin-password
-curl -u admin:<password> -k https://<ingress_ip>:9200
+juju run-action opensearch-k8s/0 reveal-admin-password --wait
+curl --insecure -u admin:<password> -k https://<ingress_ip>:9200
 ```
 
 Road Map

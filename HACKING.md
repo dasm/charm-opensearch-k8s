@@ -9,7 +9,7 @@ sudo snap install microk8s --classic
 sudo snap install juju --classic
 sudo snap install charmcraft --classic
 
-# Create an alias to kubectl
+# You might create an alias for a kubectl
 sudo snap alias microk8s.kubectl kubectl
 
 # Enable firewall for traffic from and to k8s
@@ -27,8 +27,8 @@ juju bootstrap microk8s micro
 juju add-model testing
 
 # Check deployment
-kubectl get all -n controller-micro
-kubectl get all -n testing
+microk8s kubectl get all -n controller-micro
+microk8s kubectl get all -n testing
 
 # Clone the charm code
 git clone https://github.com/dasm/charm-opensearch-k8s && cd charm-opensearch-k8s
@@ -37,7 +37,7 @@ git clone https://github.com/dasm/charm-opensearch-k8s && cd charm-opensearch-k8
 lxd init --auto
 
 # Install pip3
-sudo apt install python3-pip
+sudo apt update && sudo apt install python3-pip
 
 # Fetch nginx integration
 charmcraft fetch-lib charms.nginx_ingress_integrator.v0.ingress
@@ -46,7 +46,10 @@ charmcraft fetch-lib charms.nginx_ingress_integrator.v0.ingress
 charmcraft build
 
 # Deploy!
-juju deploy ./opensearch-k8s.charm --resource image=opensearchproject/opensearch:1.0.0-rc1
+juju deploy ./opensearch-k8s_ubuntu-20.04-amd64.charm --resource image=opensearchproject/opensearch:1.0.0-rc1
+
+# Monitor deployment
+watch --color juju status --color
 
 # When done, you can stop microk8s
 microk8s stop
